@@ -21,7 +21,6 @@ func signalCandidate(addr string, c *webrtc.ICECandidate) error {
 	if err != nil {
 		return err
 	}
-
 	if closeErr := resp.Body.Close(); closeErr != nil {
 		return closeErr
 	}
@@ -56,6 +55,7 @@ func main() { //nolint:gocognit
 				Credential:     "admin",
 			},
 		},
+		ICETransportPolicy: webrtc.ICETransportPolicyRelay,
 	}
 
 	// Create a new RTCPeerConnection
@@ -75,6 +75,10 @@ func main() { //nolint:gocognit
 		if c == nil {
 			return
 		}
+
+		fmt.Println(c.ToJSON())
+
+		fmt.Println(c.Address, c.Port, c.RelatedAddress, c.RelatedPort)
 
 		candidatesMux.Lock()
 		defer candidatesMux.Unlock()
@@ -100,7 +104,7 @@ func main() { //nolint:gocognit
 		}
 	})
 
-	// A HTTP handler that processes a SessionDescription given to us from the other Pion process
+	// // A HTTP handler that processes a SessionDescription given to us from the other Pion process
 	http.HandleFunc("/sdp", func(w http.ResponseWriter, r *http.Request) {
 		sdp := webrtc.SessionDescription{}
 		if sdpErr := json.NewDecoder(r.Body).Decode(&sdp); sdpErr != nil {
@@ -145,9 +149,9 @@ func main() { //nolint:gocognit
 
 	// Register channel opening handling
 	dataChannel.OnOpen(func() {
-		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", dataChannel.Label(), dataChannel.ID())
+		fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 2 seconds\n", dataChannel.Label(), dataChannel.ID())
 
-		for range time.NewTicker(5 * time.Second).C {
+		for range time.NewTicker(2 * time.Second).C {
 			message := randomString(15)
 			fmt.Printf("Sending '%s'\n", message)
 

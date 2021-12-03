@@ -21,6 +21,10 @@ type stunLogger struct {
 	net.PacketConn
 }
 
+//We add LOG ability to packet listener and log all messages that decoded as STUN!!! (NOT TURN) types
+//We can log TURN only as RAW
+//To ensure that clients communicate over TURN (for testing) log []bytes in else of stun.IsMessage(p)
+//If it used - than you can see data flow, if not - output will be empty
 func (s *stunLogger) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	if n, err = s.PacketConn.WriteTo(p, addr); err == nil && stun.IsMessage(p) {
 		msg := &stun.Message{Raw: p}
@@ -29,6 +33,8 @@ func (s *stunLogger) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 		}
 
 		fmt.Printf("Outbound STUN: %s \n", msg.String())
+	} else {
+		fmt.Print(p) //<- this
 	}
 
 	return
@@ -84,6 +90,7 @@ func main() {
 			if key, ok := usersMap[username]; ok {
 				return key, true
 			}
+			fmt.Println("AUTH ERROR")
 			return nil, false
 		},
 		// PacketConnConfigs is a list of UDP Listeners and the configuration around them

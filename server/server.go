@@ -20,6 +20,7 @@ func signalCandidate(addr string, c *webrtc.ICECandidate) error {
 	resp, err := http.Post(fmt.Sprintf("http://%s/candidate", addr), // nolint:noctx
 		"application/json; charset=utf-8", bytes.NewReader(payload))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -44,7 +45,6 @@ func main() { // nolint:gocognit
 
 	var candidatesMux sync.Mutex
 	pendingCandidates := make([]*webrtc.ICECandidate, 0)
-	// Everything below is the Pion WebRTC API! Thanks for using it ❤️.
 
 	// Prepare the configuration
 	config := webrtc.Configuration{
@@ -56,6 +56,7 @@ func main() { // nolint:gocognit
 				Credential:     "admin",
 			},
 		},
+		ICETransportPolicy: webrtc.ICETransportPolicyRelay,
 	}
 
 	// Create a new RTCPeerConnection
@@ -76,6 +77,7 @@ func main() { // nolint:gocognit
 			return
 		}
 
+		fmt.Println(c.ToJSON())
 		candidatesMux.Lock()
 		defer candidatesMux.Unlock()
 
@@ -100,7 +102,7 @@ func main() { // nolint:gocognit
 		}
 	})
 
-	// A HTTP handler that processes a SessionDescription given to us from the other Pion process
+	//A HTTP handler that processes a SessionDescription given to us from the other Pion process
 	http.HandleFunc("/sdp", func(w http.ResponseWriter, r *http.Request) {
 		sdp := webrtc.SessionDescription{}
 		if err := json.NewDecoder(r.Body).Decode(&sdp); err != nil {
@@ -111,18 +113,18 @@ func main() { // nolint:gocognit
 			panic(err)
 		}
 
-		// Create an answer to send to the other process
+		// Create an answer to send to the other
 		answer, err := peerConnection.CreateAnswer(nil)
 		if err != nil {
 			panic(err)
 		}
 
-		// Send our answer to the HTTP server listening in the other process
+		// Send our answer to /sdp endpoint on offerer
 		payload, err := json.Marshal(answer)
 		if err != nil {
 			panic(err)
 		}
-		resp, err := http.Post(fmt.Sprintf("http://%s/sdp", *offerAddr), "application/json; charset=utf-8", bytes.NewReader(payload)) // nolint:noctx
+		resp, err := http.Post(fmt.Sprintf("http://%s/sdp", *offerAddr), "application/json; charset=utf-8", bytes.NewReader(payload))
 		if err != nil {
 			panic(err)
 		} else if closeErr := resp.Body.Close(); closeErr != nil {
@@ -165,9 +167,9 @@ func main() { // nolint:gocognit
 
 		// Register channel opening handling
 		d.OnOpen(func() {
-			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 2 seconds\n", d.Label(), d.ID())
 
-			for range time.NewTicker(5 * time.Second).C {
+			for range time.NewTicker(2 * time.Second).C {
 				message := randomString(15)
 				fmt.Printf("Sending '%s'\n", message)
 
