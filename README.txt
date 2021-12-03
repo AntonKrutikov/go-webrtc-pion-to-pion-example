@@ -46,3 +46,15 @@ When it set, then clients take only 'relay' candidates from TURN server (this li
 PART 2: add web client in chain
 
 Server serve simple page on 127.0.0.1:6000/web (look in console)
+
+
+PART 3: Embed TURN inside server
+
+Switch to branch embedded_turn and examine server/server.go
+
+__IMPORTANT__ NOTE: TURN works like UDP proxy - you can decode stun/turn info messages, you have access to raw data bytes,
+but this to hard to inject to encrypted webrtc flow...
+
+Bundle server with main logic and turn - is ok
+Access data only from TURN - in theory you can access raw data if you full webrtc client on intit step and it will send data,
+turn will gain it and pass to your code. But i'm sure this can't work because lack of sending connection handle packets.
