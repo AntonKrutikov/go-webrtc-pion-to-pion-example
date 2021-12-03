@@ -43,3 +43,6 @@ We need to use:
     ICETransportPolicy: webrtc.ICETransportPolicyRelay
 When it set, then clients take only 'relay' candidates from TURN server (this line with ip address of TURN listener will be added by TURN server)
 
+PART 2: add web client in chain
+
+Server serve simple page on 127.0.0.1:6000/web (look in console)
