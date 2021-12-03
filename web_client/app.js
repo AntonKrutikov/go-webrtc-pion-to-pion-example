@@ -23,10 +23,12 @@ sendChannel.onmessage = e => console.log(e.data)
 //We not recieves iceCandidates from server (but in real world must) 
 //and in result we have only 1 candidate as TURN server on both sides (connection 100% relayed)
 pc.onicecandidate = event => {
-    fetch('/web_candidate', {
-        method: 'POST',
-        body: JSON.stringify(event.candidate.candidate)
-    })
+    if (event.candidate !== null) {
+        fetch('/web_candidate', {
+            method: 'POST',
+            body: JSON.stringify(event.candidate.candidate)
+        })
+    }
 }
 
 pc.onnegotiationneeded = e =>
@@ -38,7 +40,7 @@ pc.onnegotiationneeded = e =>
         }).then(res => res.json())
             .then(data => {
                 pc.setRemoteDescription(data) //set remote description
-                
-                
+
+
             })
     })
